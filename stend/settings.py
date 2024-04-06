@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'booking',
     'django_filters',
+    'celery',
+    'django_celery_results'
 ]
 
 MIDDLEWARE = [

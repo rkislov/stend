@@ -1,6 +1,8 @@
 from rest_framework import serializers, exceptions
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Room, Resource, Booking
+from django.contrib.auth.models import User
+from .task import send_booking_email
 
 
 class RoomSerializer(serializers.ModelSerializer):
@@ -33,7 +35,18 @@ class BookingSerializer(serializers.ModelSerializer):
         if overlapping_bookings.exists():
             raise exceptions.ValidationError('Уже забронировано')
 
+        user = self.context['request'].user
+        if not user.is_authenticated:
+            raise exceptions.AuthenticationFailed('Вы не аутентифицированы')
+
         return data
+
+    def create(self, validated_data):
+        booking = super().create(validated_data)
+
+        send_booking_email.delay(booking.id)
+
+        return booking
 
     class Meta:
         model = Booking
